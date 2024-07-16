@@ -14,6 +14,7 @@ public class Calculator {
         operations.put("*", new Multiplication());
         operations.put("/", new Division());
         operations.put(":", new Division());
+        operations.put("%", new Percentage());
     }
 
     public static void start() {

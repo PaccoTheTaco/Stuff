@@ -23,7 +23,7 @@ public class CalculatorGUI extends JFrame {
         operations.put("-", new Subtraction());
         operations.put("*", new Multiplication());
         operations.put("/", new Division());
-        operations.put(":", new Division());
+        operations.put("%", new Percentage());
     }
 
     public CalculatorGUI() {
@@ -41,7 +41,7 @@ public class CalculatorGUI extends JFrame {
             @Override
             public void keyTyped(KeyEvent e) {
                 char c = e.getKeyChar();
-                if (Character.isDigit(c) || "+-*/,".indexOf(c) != -1 || c == KeyEvent.VK_BACK_SPACE) {
+                if (Character.isDigit(c) || "+-*/()%(),".indexOf(c) != -1 || c == KeyEvent.VK_BACK_SPACE) {
                     handleKeyPress(c);
                 } else if (c == KeyEvent.VK_ENTER) {
                     handleEnterPress();
@@ -51,15 +51,15 @@ public class CalculatorGUI extends JFrame {
         add(display, BorderLayout.NORTH);
 
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(4, 4, 10, 10));
+        panel.setLayout(new GridLayout(5, 4, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         String[] buttons = {
-                "1", "2", "3", "+",
-                "4", "5", "6", "-",
-                "7", "8", "9", "*",
-                "C", "0", "=", "/",
-                ","
+                "+", "-", "X", "/",
+                "7", "8", "9", "C",
+                "4", "5", "6", "%",
+                "1", "2", "3", "=",
+                "<-", "0", ",", "()"
         };
 
         for (String text : buttons) {
@@ -67,6 +67,7 @@ public class CalculatorGUI extends JFrame {
             button.setFont(new Font("Arial", Font.BOLD, 20));
             button.setBackground(Color.LIGHT_GRAY);
             button.setFocusPainted(false);
+            button.setPreferredSize(new Dimension(80, 80));  // Set preferred size for all buttons
             button.addActionListener(new ButtonClickListener());
             panel.add(button);
         }
@@ -77,15 +78,24 @@ public class CalculatorGUI extends JFrame {
     }
 
     private void handleKeyPress(char c) {
+        if (display.getText().equals("Error")) {
+            display.setText("");
+        }
         if (c == KeyEvent.VK_BACK_SPACE) {
-            String text = display.getText();
-            if (!text.isEmpty()) {
-                display.setText(text.substring(0, text.length() - 1));
-            }
+            deleteLastCharacter();
         } else if (c == ',') {
             display.setText(display.getText() + '.');
+        } else if (c == 'X') {
+            display.setText(display.getText() + '*');
         } else {
             display.setText(display.getText() + c);
+        }
+    }
+
+    private void deleteLastCharacter() {
+        String text = display.getText();
+        if (!text.isEmpty()) {
+            display.setText(text.substring(0, text.length() - 1));
         }
     }
 
@@ -106,15 +116,35 @@ public class CalculatorGUI extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand();
 
-            if (command.charAt(0) == 'C') {
+            if (display.getText().equals("Error")) {
                 display.setText("");
-            } else if (command.charAt(0) == '=') {
+            }
+
+            if (command.equals("C")) {
+                display.setText("");
+            } else if (command.equals("=")) {
                 handleEnterPress();
-            } else if (command.charAt(0) == ',') {
-                display.setText(display.getText() + '.');
+            } else if (command.equals("<-")) {
+                deleteLastCharacter();
+            } else if (command.equals("()")) {
+                handleBrackets();
+            } else if (command.equals("X")) {
+                display.setText(display.getText() + '*');
             } else {
                 display.setText(display.getText() + command);
             }
+        }
+    }
+
+    private void handleBrackets() {
+        String text = display.getText();
+        long openBrackets = text.chars().filter(ch -> ch == '(').count();
+        long closeBrackets = text.chars().filter(ch -> ch == ')').count();
+
+        if (openBrackets > closeBrackets) {
+            display.setText(display.getText() + ")");
+        } else {
+            display.setText(display.getText() + "(");
         }
     }
 
@@ -126,6 +156,9 @@ public class CalculatorGUI extends JFrame {
         for (String token : tokens) {
             if (isNumber(token)) {
                 numbers.push(Double.parseDouble(token));
+            } else if (token.equals("%")) {
+                double num = numbers.pop();
+                numbers.push(num / 100);
             } else if (operations.containsKey(token)) {
                 while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(token)) {
                     double num2 = numbers.pop();
@@ -135,6 +168,17 @@ public class CalculatorGUI extends JFrame {
                     numbers.push(result);
                 }
                 operators.push(token);
+            } else if (token.equals("(")) {
+                operators.push(token);
+            } else if (token.equals(")")) {
+                while (!operators.peek().equals("(")) {
+                    double num2 = numbers.pop();
+                    double num1 = numbers.pop();
+                    String op = operators.pop();
+                    double result = operations.get(op).calculate(num1, num2);
+                    numbers.push(result);
+                }
+                operators.pop();
             } else {
                 throw new IllegalArgumentException("Invalid token: " + token);
             }
@@ -152,7 +196,7 @@ public class CalculatorGUI extends JFrame {
     }
 
     private String[] tokenizeExpression(String expression) {
-        Pattern pattern = Pattern.compile("([0-9]+\\.?[0-9]*)|([+\\-*/:])");
+        Pattern pattern = Pattern.compile("([0-9]+\\.?[0-9]*)|([+\\-*/()%(),])");
         Matcher matcher = pattern.matcher(expression);
         Stack<String> tokens = new Stack<>();
 
@@ -175,7 +219,7 @@ public class CalculatorGUI extends JFrame {
     private int precedence(String operator) {
         if (operator.equals("+") || operator.equals("-")) {
             return 1;
-        } else if (operator.equals("*") || operator.equals("/") || operator.equals(":")) {
+        } else if (operator.equals("*") || operator.equals("/")) {
             return 2;
         } else {
             return 0;

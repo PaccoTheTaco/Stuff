@@ -1,40 +1,39 @@
 import calculator.Calculator;
+import todo.ToDoListManagerGUI;
 
-import java.util.Scanner;
+import javax.swing.*;
+import java.awt.*;
 
 public class Main {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        EventQueue.invokeLater(() -> {
+            JFrame frame = new JFrame("Main Menu");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(400, 300);
 
-        while (true) {
-            System.out.println("================================");
-            System.out.println("Welcome to the Main Menu");
-            System.out.println("================================");
-            System.out.println("1. Start Calculator");
-            System.out.println("2. Exit");
-            System.out.println("================================");
-            System.out.print("Enter your choice: ");
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(3, 1));
 
-            int choice;
-            try {
-                choice = scanner.nextInt();
-            } catch (Exception e) {
-                System.out.println("Invalid input. Please enter a number.");
-                scanner.next(); // Clear invalid input
-                continue;
-            }
+            JButton calculatorButton = new JButton("Start Calculator");
+            calculatorButton.addActionListener(e -> {
+                Calculator.start();
+            });
 
-            switch (choice) {
-                case 1:
-                    Calculator.start();
-                    break;
-                case 2:
-                    System.out.println("Exiting program.");
-                    scanner.close();
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
-        }
+            JButton toDoListManagerButton = new JButton("Manage ToDo Lists");
+            toDoListManagerButton.addActionListener(e -> {
+                ToDoListManagerGUI managerGUI = new ToDoListManagerGUI();
+                managerGUI.setVisible(true);
+            });
+
+            JButton exitButton = new JButton("Exit");
+            exitButton.addActionListener(e -> System.exit(0));
+
+            panel.add(calculatorButton);
+            panel.add(toDoListManagerButton);
+            panel.add(exitButton);
+
+            frame.add(panel);
+            frame.setVisible(true);
+        });
     }
 }

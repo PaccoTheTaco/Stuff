@@ -2,8 +2,6 @@ package todo;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -23,9 +21,20 @@ public class ToDoListGUI {
             public void mouseClicked(MouseEvent evt) {
                 int index = itemList.locationToIndex(evt.getPoint());
                 if (index != -1) {
-                    Task task = listModel.getElementAt(index);
-                    task.setCompleted(!task.isCompleted());
-                    itemList.repaint(itemList.getCellBounds(index, index));
+                    TaskRenderer renderer = (TaskRenderer) itemList.getCellRenderer();
+                    Rectangle bounds = itemList.getCellBounds(index, index);
+                    Point point = evt.getPoint();
+                    JLabel deleteLabel = renderer.getDeleteLabel();
+                    Rectangle deleteBounds = deleteLabel.getBounds();
+                    deleteBounds.setLocation(bounds.x + deleteLabel.getX(), bounds.y + deleteLabel.getY());
+
+                    if (deleteBounds.contains(point)) {
+                        listModel.remove(index);
+                    } else {
+                        Task task = listModel.getElementAt(index);
+                        task.setCompleted(!task.isCompleted());
+                        itemList.repaint(itemList.getCellBounds(index, index));
+                    }
                 }
             }
         });
@@ -35,24 +44,18 @@ public class ToDoListGUI {
         JButton addButton = new JButton("Add");
         JButton removeButton = new JButton("Remove");
 
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String item = itemTextField.getText();
-                if (!item.isEmpty()) {
-                    listModel.addElement(new Task(item));
-                    itemTextField.setText("");
-                }
+        addButton.addActionListener(e -> {
+            String item = itemTextField.getText();
+            if (!item.isEmpty()) {
+                listModel.addElement(new Task(item));
+                itemTextField.setText("");
             }
         });
 
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedIndex = itemList.getSelectedIndex();
-                if (selectedIndex != -1) {
-                    listModel.remove(selectedIndex);
-                }
+        removeButton.addActionListener(e -> {
+            int selectedIndex = itemList.getSelectedIndex();
+            if (selectedIndex != -1) {
+                listModel.remove(selectedIndex);
             }
         });
 

@@ -67,7 +67,7 @@ public class CalculatorGUI extends JFrame {
             button.setFont(new Font("Arial", Font.BOLD, 20));
             button.setBackground(Color.LIGHT_GRAY);
             button.setFocusPainted(false);
-            button.setPreferredSize(new Dimension(80, 80));  // Set preferred size for all buttons
+            button.setPreferredSize(new Dimension(80, 80));
             button.addActionListener(new ButtonClickListener());
             panel.add(button);
         }

@@ -31,17 +31,18 @@ public class ToDoListManagerGUI extends JFrame {
                     Rectangle bounds = listDisplay.getCellBounds(index, index);
                     Point point = evt.getPoint();
                     if (point.getX() > bounds.getX() + bounds.getWidth() - 30) {
-                        // If the click is on the trash can icon
                         String selectedList = listModel.getElementAt(index);
                         toDoLists.remove(selectedList);
                         listModel.remove(index);
                         taskPanel.removeAll();
                         taskPanel.revalidate();
                         taskPanel.repaint();
-                    } else if (evt.getClickCount() == 2) {
-                        // If it's a double click
+                    } else if (evt.getClickCount() == 1) {
                         String selectedList = listModel.getElementAt(index);
                         showToDoList(selectedList);
+                    } else if (evt.getClickCount() == 2) {
+                        String selectedList = listModel.getElementAt(index);
+                        openFullScreenList(selectedList);
                     }
                 }
             }
@@ -81,5 +82,24 @@ public class ToDoListManagerGUI extends JFrame {
         taskPanel.add(toDoListGUI.getPanel(), BorderLayout.CENTER);
         taskPanel.revalidate();
         taskPanel.repaint();
+    }
+
+    private void openFullScreenList(String listName) {
+        ToDoListGUI toDoListGUI = toDoLists.get(listName);
+        JFrame fullScreenFrame = new JFrame(listName);
+        fullScreenFrame.setSize(800, 600);
+        fullScreenFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        fullScreenFrame.setLayout(new BorderLayout());
+
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> fullScreenFrame.dispose());
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(backButton, BorderLayout.WEST);
+
+        fullScreenFrame.add(topPanel, BorderLayout.NORTH);
+        fullScreenFrame.add(toDoListGUI.getPanel(), BorderLayout.CENTER);
+
+        fullScreenFrame.setVisible(true);
     }
 }

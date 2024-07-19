@@ -60,10 +60,28 @@ public class ToDoListManagerGUI extends JFrame {
             }
         });
 
+        JButton editListButton = new JButton("Edit List Name");
+        editListButton.addActionListener(e -> {
+            int index = listDisplay.getSelectedIndex();
+            if (index != -1) {
+                String oldName = listModel.getElementAt(index);
+                String newName = JOptionPane.showInputDialog(this, "Enter new list name:", oldName);
+                if (newName != null && !newName.trim().isEmpty() && !toDoLists.containsKey(newName)) {
+                    ToDoListGUI toDoListGUI = toDoLists.remove(oldName);
+                    toDoListGUI.setListName(newName);
+                    toDoLists.put(newName, toDoListGUI);
+                    listModel.set(index, newName);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select a list to edit.");
+            }
+        });
+
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BorderLayout());
         inputPanel.add(listNameField, BorderLayout.CENTER);
         inputPanel.add(addListButton, BorderLayout.EAST);
+        inputPanel.add(editListButton, BorderLayout.WEST);
 
         taskPanel = new JPanel();
         taskPanel.setLayout(new BorderLayout());

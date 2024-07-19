@@ -12,6 +12,7 @@ public class TaskRenderer extends JPanel implements ListCellRenderer<Task> {
         checkBox = new JCheckBox();
         deleteLabel = new JLabel("X");
         deleteLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
         add(checkBox, BorderLayout.CENTER);
         add(deleteLabel, BorderLayout.EAST);
     }
@@ -20,18 +21,12 @@ public class TaskRenderer extends JPanel implements ListCellRenderer<Task> {
     public Component getListCellRendererComponent(JList<? extends Task> list, Task task, int index, boolean isSelected, boolean cellHasFocus) {
         checkBox.setText(task.getDescription());
         checkBox.setSelected(task.isCompleted());
+
         setEnabled(list.isEnabled());
         setFont(list.getFont());
-        setBackground(list.getBackground());
-        setForeground(list.getForeground());
-        if (isSelected) {
-            setBackground(list.getSelectionBackground());
-            setForeground(list.getSelectionForeground());
-        }
-        return this;
-    }
+        setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+        setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
 
-    public JLabel getDeleteLabel() {
-        return deleteLabel;
+        return this;
     }
 }

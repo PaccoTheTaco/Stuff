@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 public class ToDoListGUI {
     private DefaultListModel<Task> listModel;
@@ -47,20 +49,38 @@ public class ToDoListGUI {
         JScrollPane scrollPane = new JScrollPane(itemList);
 
         JTextField itemTextField = new JTextField();
+        JTextField dueDateField = new JTextField("YYYY-MM-DD");
+        JComboBox<Task.Priority> priorityComboBox = new JComboBox<>(Task.Priority.values());
         JButton addButton = new JButton("Add");
 
         addButton.addActionListener(e -> {
             String item = itemTextField.getText();
+            String dueDateText = dueDateField.getText().trim();
+            LocalDate dueDate = null;
+
+            if (!dueDateText.isEmpty() && !dueDateText.equals("YYYY-MM-DD")) {
+                try {
+                    dueDate = LocalDate.parse(dueDateText);
+                } catch (DateTimeParseException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid date format. Please use YYYY-MM-DD.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            Task.Priority priority = (Task.Priority) priorityComboBox.getSelectedItem();
             if (!item.isEmpty()) {
-                listModel.addElement(new Task(item));
+                listModel.addElement(new Task(item, dueDate, priority));
                 itemTextField.setText("");
+                dueDateField.setText("YYYY-MM-DD");
             }
         });
 
         JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new BorderLayout());
-        inputPanel.add(itemTextField, BorderLayout.CENTER);
-        inputPanel.add(addButton, BorderLayout.EAST);
+        inputPanel.setLayout(new GridLayout(1, 4));
+        inputPanel.add(itemTextField);
+        inputPanel.add(dueDateField);
+        inputPanel.add(priorityComboBox);
+        inputPanel.add(addButton);
 
         panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -74,9 +94,30 @@ public class ToDoListGUI {
 
     private void editTask(Task task, int index) {
         JTextField editTextField = new JTextField(task.getDescription());
-        int result = JOptionPane.showConfirmDialog(panel, editTextField, "Edit Task", JOptionPane.OK_CANCEL_OPTION);
+        JTextField editDueDateField = new JTextField((task.getDueDate() != null) ? task.getDueDate().toString() : "");
+        JComboBox<Task.Priority> editPriorityComboBox = new JComboBox<>(Task.Priority.values());
+        editPriorityComboBox.setSelectedItem(task.getPriority());
+
+        JPanel editPanel = new JPanel(new GridLayout(3, 1));
+        editPanel.add(editTextField);
+        editPanel.add(editDueDateField);
+        editPanel.add(editPriorityComboBox);
+
+        int result = JOptionPane.showConfirmDialog(panel, editPanel, "Edit Task", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             task.setDescription(editTextField.getText());
+            String dueDateText = editDueDateField.getText().trim();
+            if (!dueDateText.isEmpty()) {
+                try {
+                    task.setDueDate(LocalDate.parse(dueDateText));
+                } catch (DateTimeParseException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid date format. Please use YYYY-MM-DD.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else {
+                task.setDueDate(null);
+            }
+            task.setPriority((Task.Priority) editPriorityComboBox.getSelectedItem());
             itemList.repaint(itemList.getCellBounds(index, index));
         }
     }

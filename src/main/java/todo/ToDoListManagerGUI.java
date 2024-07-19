@@ -115,6 +115,10 @@ public class ToDoListManagerGUI extends JFrame {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(backButton, BorderLayout.WEST);
 
+        JLabel listNameLabel = new JLabel(listName, SwingConstants.CENTER);
+        listNameLabel.setFont(new Font("Serif", Font.BOLD, 20));
+        topPanel.add(listNameLabel, BorderLayout.CENTER);
+
         fullScreenFrame.add(topPanel, BorderLayout.NORTH);
         fullScreenFrame.add(toDoListGUI.getPanel(), BorderLayout.CENTER);
 

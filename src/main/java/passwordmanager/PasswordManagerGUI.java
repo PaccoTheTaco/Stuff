@@ -1,5 +1,7 @@
 package passwordmanager;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -10,10 +12,11 @@ import java.util.Base64;
 import java.util.List;
 
 public class PasswordManagerGUI extends JFrame {
-    private static final String CREDENTIAL_FILE = "credentials.txt";
+    private static final String CREDENTIAL_FILE = "credentials.enc";
     private static final String MASTER_PASSWORD_FILE = "master_password.dat";
     private List<Credential> credentials;
     private DefaultListModel<String> listModel;
+    private String masterPassword;
 
     public PasswordManagerGUI() {
         credentials = new ArrayList<>();
@@ -27,6 +30,8 @@ public class PasswordManagerGUI extends JFrame {
                 System.exit(0);
             }
         }
+
+        loadCredentials();
 
         setTitle("Password Manager");
         setSize(400, 400);
@@ -54,6 +59,14 @@ public class PasswordManagerGUI extends JFrame {
 
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                saveCredentials();
+                System.exit(0);
+            }
+        });
     }
 
     private boolean masterPasswordExists() {
@@ -73,7 +86,7 @@ public class PasswordManagerGUI extends JFrame {
         int option = JOptionPane.showConfirmDialog(this, fields, "Setup Password Manager", JOptionPane.OK_CANCEL_OPTION);
 
         if (option == JOptionPane.OK_OPTION) {
-            String masterPassword = new String(passwordField.getPassword());
+            masterPassword = new String(passwordField.getPassword());
             String email = emailField.getText();
             saveMasterPassword(masterPassword, email);
         } else {
@@ -107,8 +120,8 @@ public class PasswordManagerGUI extends JFrame {
         int option = JOptionPane.showConfirmDialog(this, fields, "Authenticate", JOptionPane.OK_CANCEL_OPTION);
 
         if (option == JOptionPane.OK_OPTION) {
-            String enteredPassword = new String(passwordField.getPassword());
-            return checkMasterPassword(enteredPassword);
+            masterPassword = new String(passwordField.getPassword());
+            return checkMasterPassword(masterPassword);
         }
         return false;
     }
@@ -134,11 +147,13 @@ public class PasswordManagerGUI extends JFrame {
         JTextField titleField = new JTextField();
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
+        JTextField urlField = new JTextField();
 
         Object[] fields = {
                 "Title:", titleField,
                 "Username:", usernameField,
-                "Password:", passwordField
+                "Password:", passwordField,
+                "URL:", urlField
         };
 
         int option = JOptionPane.showConfirmDialog(this, fields, "Add Credential", JOptionPane.OK_CANCEL_OPTION);
@@ -147,8 +162,9 @@ public class PasswordManagerGUI extends JFrame {
             String title = titleField.getText();
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
+            String url = urlField.getText();
 
-            Credential credential = new Credential(title, username, password);
+            Credential credential = new Credential(title, username, password, url);
             credentials.add(credential);
             listModel.addElement(title);
         }
@@ -158,8 +174,66 @@ public class PasswordManagerGUI extends JFrame {
         JOptionPane.showMessageDialog(this,
                 "Title: " + credential.getTitle() + "\n" +
                         "Username: " + credential.getUsername() + "\n" +
-                        "Password: " + credential.getPassword(),
+                        "Password: " + credential.getPassword() + "\n" +
+                        "URL: " + credential.getUrl(),
                 "Credential Details",
                 JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void saveCredentials() {
+        try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+            objectStream.writeObject(credentials);
+            objectStream.close();
+            byte[] serializedData = byteStream.toByteArray();
+
+            SecretKeySpec key = new SecretKeySpec(getAESKeyFromPassword(masterPassword), "AES");
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            byte[] encryptedData = cipher.doFinal(serializedData);
+
+            try (FileOutputStream fileOut = new FileOutputStream(CREDENTIAL_FILE)) {
+                fileOut.write(encryptedData);
+                fileOut.flush();
+            }
+            System.out.println("Credentials saved successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadCredentials() {
+        File file = new File(CREDENTIAL_FILE);
+        if (file.exists()) {
+            try {
+                byte[] encryptedData;
+                try (FileInputStream fileIn = new FileInputStream(file)) {
+                    encryptedData = fileIn.readAllBytes();
+                }
+
+                SecretKeySpec key = new SecretKeySpec(getAESKeyFromPassword(masterPassword), "AES");
+                Cipher cipher = Cipher.getInstance("AES");
+                cipher.init(Cipher.DECRYPT_MODE, key);
+                byte[] serializedData = cipher.doFinal(encryptedData);
+
+                ByteArrayInputStream byteStream = new ByteArrayInputStream(serializedData);
+                ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+                credentials = (List<Credential>) objectStream.readObject();
+                objectStream.close();
+
+                for (Credential credential : credentials) {
+                    listModel.addElement(credential.getTitle());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private byte[] getAESKeyFromPassword(String password) throws Exception {
+        MessageDigest sha = MessageDigest.getInstance("SHA-256");
+        byte[] key = sha.digest(password.getBytes("UTF-8"));
+        return key;
     }
 }

@@ -18,7 +18,7 @@ public class ToDoList {
 
     public ToDoList() {
         items = new ArrayList<>();
-        loadFromFile(); // Laden der Daten beim Erstellen des Objekts
+        loadFromFile();
     }
 
     public void addItem(Task item) {
@@ -60,7 +60,7 @@ public class ToDoList {
         File file = new File(FILE_PATH);
         if (!file.exists()) {
             try {
-                file.createNewFile(); // Datei erstellen, wenn sie nicht existiert
+                file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }

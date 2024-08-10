@@ -11,9 +11,9 @@ public class Main {
     private static ToDoList toDoList;
 
     public static void main(String[] args) {
-        toDoList = new ToDoList(); // Laden der ToDo-Liste
+        toDoList = new ToDoList();
 
-        // Shutdown-Hook zum Speichern der ToDo-Liste
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             toDoList.saveToFile();
             System.out.println("ToDo list saved on exit.");

@@ -8,12 +8,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ToDoListManagerGUI extends JFrame {
+    private ToDoList toDoList;
     private Map<String, ToDoListGUI> toDoLists;
     private DefaultListModel<String> listModel;
     private JList<String> listDisplay;
     private JPanel taskPanel;
 
-    public ToDoListManagerGUI() {
+    public ToDoListManagerGUI(ToDoList toDoList) {
+        this.toDoList = toDoList;
         setTitle("ToDo List Manager");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -54,7 +56,8 @@ public class ToDoListManagerGUI extends JFrame {
         addListButton.addActionListener(e -> {
             String listName = listNameField.getText();
             if (!listName.isEmpty() && !toDoLists.containsKey(listName)) {
-                toDoLists.put(listName, new ToDoListGUI(listName));
+                ToDoListGUI newList = new ToDoListGUI(listName);
+                toDoLists.put(listName, newList);
                 listModel.addElement(listName);
                 listNameField.setText("");
             }
@@ -92,6 +95,12 @@ public class ToDoListManagerGUI extends JFrame {
         setLayout(new BorderLayout());
         add(inputPanel, BorderLayout.NORTH);
         add(splitPane, BorderLayout.CENTER);
+
+        if (toDoList != null) {
+            for (Task task : toDoList.getItems()) {
+                listModel.addElement(task.getDescription());
+            }
+        }
     }
 
     private void showToDoList(String listName) {
